@@ -1,0 +1,72 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
+venv/
+env/
+ENV/
+.venv/
+.env/
+.ENV/
+
+# VS Code settings
+.vscode/
+
+# PyCharm settings
+.idea/
+
+# dotenv environment variables
+.env
+*.env
+
+# Logs and other files
+*.log
+*.sqlite3
+
+# Mac OS files
+.DS_Store
+
+# Token/security files (e.g. Discord tokens)
+config.json
+secrets.json
+token.txt
+
+# System files
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Optional: ignore testing coverage files
+htmlcov/
+.coverage
+.tox/
+.nox/
+.cache/
+coverage.xml
+nosetests.xml
+pytest_cache/
+
+# Optional: ignore Jupyter notebooks (if not used)
+*.ipynb
