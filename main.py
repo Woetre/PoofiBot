@@ -21,7 +21,7 @@ CONFIG_FILE = "reaction_config.json"
 
 bot = commands.Bot(command_prefix='!', intents=intents)
 
-# ─────── Reaction Role Manager ───────
+# ─────── Backend Reaction Role Command ───────
 class ReactionRoleManager:
     def __init__(self, bot):
         self.bot = bot
@@ -81,27 +81,7 @@ class ReactionRoleManager:
         if member:
             await member.remove_roles(role)
 
-# ─────── Anime Command ───────
-class AnimeCog(commands.Cog):
-    def __init__(self, bot):
-        self.bot = bot
-
-    @app_commands.command(name="anime", description="Toon een willekeurige anime GIF")
-    async def animegif_command(self, interaction: discord.Interaction):
-        await interaction.response.defer()
-        async with aiohttp.ClientSession() as session:
-            async with session.get("https://api.nekosapi.com/v4/images/random?type=gif") as response:
-                if response.status == 200:
-                    data = await response.json()
-                    gif_url = data[0]["url"]
-                    await interaction.followup.send(gif_url)
-                else:
-                    await interaction.followup.send("Kon geen anime gif ophalen 😢")
-
-    async def cog_load(self):
-        self.bot.tree.add_command(self.animegif_command, guild=GUILD_ID)
-
-# ─────── Setup Command ───────
+# ─────── Setup Reaction Role Command ───────
 class SetupCog(commands.Cog):
     def __init__(self, bot, rr_manager: ReactionRoleManager):
         self.bot = bot
@@ -123,6 +103,25 @@ class SetupCog(commands.Cog):
     async def cog_load(self):
         self.bot.tree.add_command(self.setup_reactierollen, guild=GUILD_ID)
 
+# ─────── Anime Command ───────
+class AnimeCog(commands.Cog):
+    def __init__(self, bot):
+        self.bot = bot
+
+    @app_commands.command(name="anime", description="Toon een willekeurige anime GIF")
+    async def animegif_command(self, interaction: discord.Interaction):
+        await interaction.response.defer()
+        async with aiohttp.ClientSession() as session:
+            async with session.get("https://api.nekosapi.com/v4/images/random?type=gif") as response:
+                if response.status == 200:
+                    data = await response.json()
+                    gif_url = data[0]["url"]
+                    await interaction.followup.send(gif_url)
+                else:
+                    await interaction.followup.send("Kon geen anime gif ophalen 😢")
+
+    async def cog_load(self):
+        self.bot.tree.add_command(self.animegif_command, guild=GUILD_ID)
 
 # ─────── on_ready ───────
 @bot.event
