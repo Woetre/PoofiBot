@@ -129,6 +129,7 @@ async def on_ready():
     print(f'✅ Ingelogd als {bot.user} (ID: {bot.user.id})')
 
     try:
+        await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name="twitch.tv/LiveMetMarrit"))
         rr_manager = ReactionRoleManager(bot)
         await bot.add_cog(AnimeCog(bot))
         await bot.add_cog(SetupCog(bot, rr_manager))
