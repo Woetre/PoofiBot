@@ -126,7 +126,7 @@ class AnimeCog(commands.Cog):
     async def animegif_command(self, interaction: discord.Interaction):
         await interaction.response.defer()
         async with aiohttp.ClientSession() as session:
-            async with session.get("https://api.nekosapi.com/v4/images/random?type=gif") as response:
+            async with session.get("https://api.nekosapi.com/v4/images/random?type=gif&category=safe") as response:
                 if response.status == 200:
                     data = await response.json()
                     gif_url = data[0]["url"]
