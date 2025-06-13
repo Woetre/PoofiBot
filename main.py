@@ -93,8 +93,8 @@ class WelcomeCog(commands.Cog):
 
 # ─────── Setup Slash Command ───────
 class SetupCog(commands.Cog):
-    def __init__(self, bot, rr_manager):
-        self.bot = bot
+    def __init__(self, client, rr_manager):
+        self.bot = client
         self.rr_manager = rr_manager
 
     @app_commands.command(name="setup_reactierollen", description="Stelt een reactie-rollen bericht in.")
@@ -119,8 +119,8 @@ class SetupCog(commands.Cog):
 
 # ─────── Anime Slash Command ───────
 class AnimeCog(commands.Cog):
-    def __init__(self, bot):
-        self.bot = bot
+    def __init__(self, client):
+        self.bot = client
 
     @app_commands.command(name="anime", description="Toon een willekeurige anime GIF")
     async def animegif_command(self, interaction: discord.Interaction):
