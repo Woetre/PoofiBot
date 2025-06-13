@@ -17,23 +17,23 @@ intents.message_content = True
 intents.members = True
 
 GUILD_ID = discord.Object(id=1198629275687981146)
+WELCOME_CHANNEL_ID = 1382064446285025320  # ← vervang dit door jouw kanaal-ID
+
 CONFIG_FILE = "reaction_config.json"
 
 bot = commands.Bot(command_prefix='!', intents=intents)
 
-# ─────── Backend Reaction Role Command ───────
+# ─────── Reaction Role Manager ───────
 class ReactionRoleManager:
     def __init__(self, bot):
         self.bot = bot
         self.role_message_id = None
         self.config_file = CONFIG_FILE
         self.emoji_to_role = {
-            discord.PartialEmoji(name='🔴'): 1382401490462838839,  # Vul echte rol-ID’s in
+            discord.PartialEmoji(name='🔴'): 1382401490462838839,
             discord.PartialEmoji(name='🟡'): 1382403336837267577,
         }
-
         self.load_config()
-
         bot.add_listener(self.on_raw_reaction_add)
         bot.add_listener(self.on_raw_reaction_remove)
 
@@ -61,9 +61,8 @@ class ReactionRoleManager:
         if not role_id:
             return
         role = guild.get_role(role_id)
-        if not role or not payload.member:
-            return
-        await payload.member.add_roles(role)
+        if role and payload.member:
+            await payload.member.add_roles(role)
 
     async def on_raw_reaction_remove(self, payload: discord.RawReactionActionEvent):
         if payload.message_id != self.role_message_id:
@@ -81,29 +80,44 @@ class ReactionRoleManager:
         if member:
             await member.remove_roles(role)
 
-# ─────── Setup Reaction Role Command ───────
+# ─────── Welkomstbericht Class ───────
+class WelcomeCog(commands.Cog):
+    def __init__(self, bot):
+        self.bot = bot
+
+    @commands.Cog.listener()
+    async def on_member_join(self, member):
+        channel = self.bot.get_channel(WELCOME_CHANNEL_ID)
+        if channel:
+            await channel.send(f"👋 Welkom {member.mention} op de server! 🎉")
+
+# ─────── Setup Slash Command ───────
 class SetupCog(commands.Cog):
-    def __init__(self, bot, rr_manager: ReactionRoleManager):
+    def __init__(self, bot, rr_manager):
         self.bot = bot
         self.rr_manager = rr_manager
 
     @app_commands.command(name="setup_reactierollen", description="Stelt een reactie-rollen bericht in.")
     async def setup_reactierollen(self, interaction: discord.Interaction):
+        if not interaction.user.guild_permissions.administrator:
+            await interaction.response.defer(ephemeral=True)
+            await interaction.followup.send("🚫 Alleen beheerders kunnen dit commando gebruiken.", ephemeral=True)
+            return
+
         await interaction.response.defer(ephemeral=True)
         message = await interaction.channel.send(
             "📌 Reageer met een emoji om een rol te krijgen:\n🔴 = Rood\n🟡 = Geel"
         )
-
-        for emoji in self.rr_manager.emoji_to_role.keys():
+        for emoji in self.rr_manager.emoji_to_role:
             await message.add_reaction(emoji)
 
         self.rr_manager.set_message_id(message.id)
-        await interaction.followup.send("✅ Reactierollen bericht ingesteld!", ephemeral=True)
+        await interaction.followup.send("✅ Reactierollen bericht is ingesteld!", ephemeral=True)
 
     async def cog_load(self):
         self.bot.tree.add_command(self.setup_reactierollen, guild=GUILD_ID)
 
-# ─────── Anime Command ───────
+# ─────── Anime Slash Command ───────
 class AnimeCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -123,20 +137,29 @@ class AnimeCog(commands.Cog):
     async def cog_load(self):
         self.bot.tree.add_command(self.animegif_command, guild=GUILD_ID)
 
-# ─────── on_ready ───────
+# ─────── Core Functionaliteit ───────
+class Core(commands.Cog):
+    def __init__(self, bot):
+        self.bot = bot
+
+    async def cog_load(self):
+        # Starttaken zoals slash commands en cogs laden
+        rr_manager = ReactionRoleManager(self.bot)
+        await self.bot.add_cog(WelcomeCog(self.bot))
+        await self.bot.add_cog(AnimeCog(self.bot))
+        await self.bot.add_cog(SetupCog(self.bot, rr_manager))
+        await self.bot.tree.sync(guild=GUILD_ID)
+        print("📡 Slash commands gesynchroniseerd.")
+
+    @commands.Cog.listener()
+    async def on_ready(self):
+        await self.bot.change_presence(
+            activity=discord.Activity(type=discord.ActivityType.watching, name="twitch.tv/LiveMetMarrit")
+        )
+        print(f'✅ Ingelogd als {self.bot.user} (ID: {self.bot.user.id})')
+
+# ─────── Run Bot ───────
 @bot.event
-async def on_ready():
-    print(f'✅ Ingelogd als {bot.user} (ID: {bot.user.id})')
-
-    try:
-        await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name="twitch.tv/LiveMetMarrit"))
-        rr_manager = ReactionRoleManager(bot)
-        await bot.add_cog(AnimeCog(bot))
-        await bot.add_cog(SetupCog(bot, rr_manager))
-        await bot.tree.sync(guild=GUILD_ID)
-        print(f"📡 Slash commands gesynchroniseerd.")
-    except Exception as e:
-        print(f"❌ Fout bij sync: {e}")
-
-# ─────── Start Bot ───────
+async def setup_hook():
+    await bot.add_cog(Core(bot))
 bot.run(token, log_handler=handler, log_level=logging.DEBUG)
