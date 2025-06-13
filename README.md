@@ -1,7 +1,7 @@
 # 🤖 PoofiBot – Discord Bot
 
 PoofiBot is a multifunctional Discord bot built with Python. It features slash commands, anime GIFs, reaction roles, and automatic welcome messages for new members.
-It is uniquely made for https:twitch.tv/livemetmarrit to fit the needs for her discord community.
+It is uniquely made for [Twitch/Livemetmarrit](https://twitch.tv/livemetmarrit) to fit the needs for her discord community.
 
 ---
 
