@@ -23,15 +23,15 @@ CONFIG_FILE = "reaction_config.json"
 
 bot = commands.Bot(command_prefix='!', intents=intents)
 
-# ─────── Reaction Role Manager ───────
+# ─────── Backend ReactionRole Command ───────
 class ReactionRoleManager:
     def __init__(self, bot):
         self.bot = bot
         self.role_message_id = None
         self.config_file = CONFIG_FILE
         self.emoji_to_role = {
-            discord.PartialEmoji(name='🔴'): 1382401490462838839,
-            discord.PartialEmoji(name='🟡'): 1382403336837267577,
+            discord.PartialEmoji(name='minecraft', id=1384211982634451005): 1382403336837267577,
+            discord.PartialEmoji(name='valorant', id=1384211801260163112): 1382401490462838839,
         }
         self.load_config()
         bot.add_listener(self.on_raw_reaction_add)
@@ -80,19 +80,8 @@ class ReactionRoleManager:
         if member:
             await member.remove_roles(role)
 
-# ─────── Welkomstbericht Class ───────
-class WelcomeCog(commands.Cog):
-    def __init__(self, bot):
-        self.bot = bot
-
-    @commands.Cog.listener()
-    async def on_member_join(self, member):
-        channel = self.bot.get_channel(WELCOME_CHANNEL_ID)
-        if channel:
-            await channel.send(f"👋 Welkom {member.mention} op de server! 🎉")
-
-# ─────── Setup Slash Command ───────
-class SetupCog(commands.Cog):
+# ─────── Frontend ReactionRole Command ───────
+class ReactionRoleCog(commands.Cog):
     def __init__(self, client, rr_manager):
         self.bot = client
         self.rr_manager = rr_manager
@@ -106,7 +95,11 @@ class SetupCog(commands.Cog):
 
         await interaction.response.defer(ephemeral=True)
         message = await interaction.channel.send(
-            "📌 Reageer met een emoji om een rol te krijgen:\n🔴 = Rood\n🟡 = Geel"
+            "📌 Reageer met een emoji om een rol te krijgen:"
+            "\n"
+            "\n<:valorant:1384211801260163112> = Voor alles wat betreft valorant"
+            "\n<:minecraft:1384211982634451005> = Voor alles wat betreft minecraft"
+
         )
         for emoji in self.rr_manager.emoji_to_role:
             await message.add_reaction(emoji)
@@ -116,6 +109,17 @@ class SetupCog(commands.Cog):
 
     async def cog_load(self):
         self.bot.tree.add_command(self.setup_reactierollen, guild=GUILD_ID)
+
+# ─────── Welkomstbericht Class ───────
+class WelcomeCog(commands.Cog):
+    def __init__(self, bot):
+        self.bot = bot
+
+    @commands.Cog.listener()
+    async def on_member_join(self, member):
+        channel = self.bot.get_channel(WELCOME_CHANNEL_ID)
+        if channel:
+            await channel.send(f"👋 Welkom {member.mention} op de server! 🎉")
 
 # ─────── Anime Slash Command ───────
 class AnimeCog(commands.Cog):
@@ -147,7 +151,7 @@ class Core(commands.Cog):
         rr_manager = ReactionRoleManager(self.bot)
         await self.bot.add_cog(WelcomeCog(self.bot))
         await self.bot.add_cog(AnimeCog(self.bot))
-        await self.bot.add_cog(SetupCog(self.bot, rr_manager))
+        await self.bot.add_cog(ReactionRoleCog(self.bot, rr_manager))
         await self.bot.tree.sync(guild=GUILD_ID)
         print("📡 Slash commands gesynchroniseerd.")
 
