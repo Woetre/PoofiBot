@@ -17,7 +17,8 @@ intents.message_content = True
 intents.members = True
 
 GUILD_ID = discord.Object(id=1198629275687981146)
-WELCOME_CHANNEL_ID = 1382064446285025320  # ← vervang dit door jouw kanaal-ID
+WELCOME_CHANNEL_ID = 1382064446285025320
+AUTO_ROLE_ID = 1382064446285025320
 
 CONFIG_FILE = "reaction_config.json"
 
@@ -91,7 +92,6 @@ class ReactionRoleManager:
         if member:
             await member.remove_roles(role)
 
-
 # ─────── Frontend ReactionRole Command ───────
 class ReactionRoleCog(commands.Cog):
     def __init__(self, client, rr_manager):
@@ -120,16 +120,24 @@ class WelcomeCog(commands.Cog):
 
     @commands.Cog.listener()
     async def on_member_join(self, member):
+        # Welkombericht versturen
         channel = self.bot.get_channel(WELCOME_CHANNEL_ID)
         if channel:
             await channel.send(
                 f"👋 Welkom {member.mention} op de server! 🎉"
-                f"\n"             
-                f"• ✅ Haal je rollen op in #rollen.\n"
-                f"• 📺 Bekijk wanneer Marrit live is in #live-aankondigingen.\n"
-                f"• 💬 Chat mee in #algemeen of spring in een voicechannel.\n\n"
-                f"Veel plezier en wees lief voor elkaar! 💜"
+                f"\n• ✅ Haal je rollen op in #rollen."
+                f"\n• 📺 Bekijk wanneer Marrit live is in #live-aankondigingen."
+                f"\n• 💬 Chat mee in #algemeen of spring in een voicechannel."
+                f"\n\nVeel plezier en wees lief voor elkaar! 💜"
             )
+
+        # Automatisch rol geven
+        role = member.guild.get_role(AUTO_ROLE_ID)
+        if role:
+            try:
+                await member.add_roles(role, reason="Automatisch toegekende rol bij joinen.")
+            except discord.Forbidden:
+                print(f"❌ Bot mist permissies om rol toe te voegen aan {member}.")
 
 # ─────── Help Slash Command ───────
 class HelpCog(commands.Cog):
@@ -156,7 +164,7 @@ class HelpCog(commands.Cog):
     async def cog_load(self):
         self.bot.tree.add_command(self.help_command, guild=GUILD_ID)
 
-class ModerationCog(commands.Cog):
+class PurgeCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
@@ -216,7 +224,7 @@ class Core(commands.Cog):
         await self.bot.add_cog(WelcomeCog(self.bot))
 
         # ───── Adding Prefix Commands ─────
-        await self.bot.add_cog(ModerationCog(self.bot))
+        await self.bot.add_cog(PurgeCog(self.bot))
 
         # ───── Adding Slash Commands ─────
         await self.bot.add_cog(HelpCog(self.bot))
