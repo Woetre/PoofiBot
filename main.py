@@ -61,10 +61,11 @@ class ReactionRoleManager:
             print(f"❌ Fout bij laden config: {e}")
 
     async def on_raw_reaction_add(self, payload: discord.RawReactionActionEvent):
+        if self.role_message_id is None:
+            return  # Geen ID opgeslagen, dus negeren
+
         if payload.message_id != self.role_message_id:
-            if self.role_message_id:
-                print(f"⚠️ Geen match met opgeslagen message_id ({self.role_message_id}). Misschien verwijderd?")
-            return
+            return  # Geen foutmelding meer, gewoon negeren
 
         guild = self.bot.get_guild(payload.guild_id)
         if not guild:
@@ -212,6 +213,52 @@ class RegelsCog(commands.Cog):
     async def cog_load(self):
         self.bot.tree.add_command(self.regels_command, guild=GUILD_ID)
 
+# ─────── Poll Slash Command ───────
+class PollCog(commands.Cog):
+    def __init__(self, bot):
+        self.bot = bot
+
+    @app_commands.command(name="poll", description="Start een poll met maximaal 10 opties.")
+    @app_commands.describe(
+        vraag="De pollvraag die je wilt stellen",
+        opties="Kiesopties gescheiden door komma’s (bijv: Ja,Nee,Misschien)"
+    )
+    async def poll_command(self, interaction: discord.Interaction, vraag: str, opties: str):
+        emoji_cijfers = ['1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣', '9️⃣', '🔟']
+        opties_lijst = [opt.strip() for opt in opties.split(",") if opt.strip()]
+
+        if not 2 <= len(opties_lijst) <= 10:
+            await interaction.response.send_message("❌ Geef tussen de 2 en 10 opties op.", ephemeral=True)
+            return
+
+        await interaction.response.defer()
+
+        beschrijving = ""
+        for i, optie in enumerate(opties_lijst):
+            beschrijving += f"{emoji_cijfers[i]} {optie}\n"
+
+        embed = discord.Embed(
+            title=f"📊 {vraag}",
+            description=beschrijving,
+            color=discord.Color.green()
+        )
+        embed.set_footer(text=f"Gemaakt door: {interaction.user.display_name}")
+
+        bericht = await interaction.channel.send(embed=embed)
+        for i in range(len(opties_lijst)):
+            await bericht.add_reaction(emoji_cijfers[i])
+
+        await interaction.followup.send("✅ Poll is geplaatst!", ephemeral=True)
+
+    async def cog_load(self):
+        # Verwijder eerst als het command al bestaat
+        try:
+            self.bot.tree.remove_command("poll", type=discord.AppCommandType.chat_input, guild=GUILD_ID)
+        except Exception as e:
+            print(f"⚠️ Kan oud poll commando niet verwijderen: {e}")
+
+        # Voeg daarna veilig toe
+        self.bot.tree.add_command(self.poll_command, guild=GUILD_ID)
 
 # ─────── Anime Slash Command ───────
 class AnimeCog(commands.Cog):
@@ -254,6 +301,7 @@ class Core(commands.Cog):
         # ───── Adding Slash Commands ─────
         await self.bot.add_cog(HelpCog(self.bot))
         await self.bot.add_cog(RegelsCog(self.bot))
+        await self.bot.add_cog(PollCog(self.bot))
         await self.bot.add_cog(AnimeCog(self.bot))
 
         await self.bot.tree.sync(guild=GUILD_ID)
