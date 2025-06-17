@@ -7,6 +7,7 @@ import asyncio
 from dotenv import load_dotenv
 import os
 import json
+import random
 
 # ─────── Setup ───────
 load_dotenv()
@@ -29,7 +30,7 @@ class ReactionRoleManager:
     def __init__(self, bot):
         self.bot = bot
         self.role_message_id = None
-        self.quotes_file = os.path.join("data", "quotes.json")
+        self.config_file = os.path.join("data", "reaction_config.json")
         self.emoji_to_role = {
             discord.PartialEmoji(name='minecraft', id=1384211982634451005): 1382403336837267577,
             discord.PartialEmoji(name='valorant', id=1384211801260163112): 1382401490462838839,
@@ -302,7 +303,6 @@ class MarritQuoteCog(commands.Cog):
         if not self.quotes:
             await interaction.response.send_message("😕 Er zijn nog geen quotes toegevoegd.")
             return
-        import random
         quote = random.choice(self.quotes)
         await interaction.response.send_message(f"💬 _{quote}_")
 
@@ -373,6 +373,26 @@ class MarritQuoteCog(commands.Cog):
     async def cog_load(self):
         self.bot.tree.add_command(self.marritquote, guild=GUILD_ID)
 
+# ─────── /Coinflip Slash Command ───────
+class CoinflipCog(commands.Cog):
+    def __init__(self, bot):
+        self.bot = bot
+
+    @app_commands.command(name="coinflip", description="Gooi een munt op: kop of munt?")
+    async def coinflip(self, interaction: discord.Interaction):
+        await interaction.response.defer()  # Zeg alvast dat we bezig zijn
+
+        # Verstuur tijdelijk bericht met animatie-effect
+        bericht = await interaction.followup.send("🪙 Gooit de munt...")
+
+        await asyncio.sleep(2)  # Wacht even voor het 'animatie' effect
+
+        resultaat = random.choice(["Kop 🪙", "Munt 🪙"])
+        await bericht.edit(content=f"🪙 De munt landt op: **{resultaat}**")
+
+    async def cog_load(self):
+        self.bot.tree.add_command(self.coinflip, guild=GUILD_ID)
+
 # ─────── Core Functionaliteit ───────
 class Core(commands.Cog):
     def __init__(self, bot):
@@ -397,6 +417,7 @@ class Core(commands.Cog):
         await self.bot.add_cog(PollCog(self.bot))
         await self.bot.add_cog(AnimeCog(self.bot))
         await self.bot.add_cog(MarritQuoteCog(self.bot))
+        await self.bot.add_cog(CoinflipCog(self.bot))
 
         await self.bot.tree.sync(guild=GUILD_ID)
         print("📡 Slash commands gesynchroniseerd.")
