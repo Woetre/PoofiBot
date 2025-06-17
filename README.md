@@ -12,8 +12,11 @@ It is uniquely made for [Twitch/Livemetmarrit](https://twitch.tv/livemetmarrit) 
 - `!purge (amount)` - Removes messages of the amount specfied. Available only to those with manage_messages permissions
 
 ### ✅ Slash Commands
+- `/help` - Shows a list of all the commands of this bot.
+- `/regels` - Showws a list of all the rules of the discord server
 - `/anime` – Sends a random anime GIF using the Nekos API.
-- `/setup_reactroles` – Automatically posts a message with emoji-based role selection.
+- `/poll` - Lets users create a poll in which can a make a statement and add answers with emoij reactions in numbers.
+- 
 
 ### 📌 Reaction Roles
 Users can react to a message with emojis to gain or remove roles. The bot remembers the setup even after restarts by storing the message ID in `reaction_config.json`.
