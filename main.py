@@ -18,7 +18,7 @@ intents.members = True
 
 GUILD_ID = discord.Object(id=1198629275687981146)
 WELCOME_CHANNEL_ID = 1382064446285025320
-AUTO_ROLE_ID = 1382064446285025320
+AUTO_ROLE_ID = 1382403336837267577
 
 CONFIG_FILE = "reaction_config.json"
 
@@ -139,6 +139,31 @@ class WelcomeCog(commands.Cog):
             except discord.Forbidden:
                 print(f"❌ Bot mist permissies om rol toe te voegen aan {member}.")
 
+# ─────── Purge Prefix Command ───────
+class PurgeCog(commands.Cog):
+    def __init__(self, bot):
+        self.bot = bot
+
+    @commands.command(name="purge", help="Verwijder een aantal berichten (alleen voor mods).")
+    @commands.has_permissions(manage_messages=True)
+    async def purge(self, ctx, aantal: int):
+        if aantal < 1 or aantal > 100:
+            await ctx.send("❌ Geef een getal tussen 1 en 100 op.")
+            return
+
+        await ctx.channel.purge(limit=aantal + 1)  # +1 zodat het commando zelf ook verdwijnt
+        bevestiging = await ctx.send(f"✅ {aantal} berichten verwijderd.")
+        await bevestiging.delete(delay=5)  # Verwijder bevestiging na 5 seconden
+
+    @purge.error
+    async def purge_error(self, ctx, error):
+        if isinstance(error, commands.MissingPermissions):
+            await ctx.send("🚫 Je hebt geen permissie om berichten te verwijderen.")
+        elif isinstance(error, commands.BadArgument):
+            await ctx.send("❌ Gebruik: `!purge <aantal>` (bijv. `!purge 10`).")
+        else:
+            await ctx.send("⚠️ Er ging iets mis.")
+
 # ─────── Help Slash Command ───────
 class HelpCog(commands.Cog):
     def __init__(self, bot):
@@ -164,29 +189,29 @@ class HelpCog(commands.Cog):
     async def cog_load(self):
         self.bot.tree.add_command(self.help_command, guild=GUILD_ID)
 
-class PurgeCog(commands.Cog):
+# ─────── Regels Slash Command ───────
+class RegelsCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(name="purge", help="Verwijder een aantal berichten (alleen voor mods).")
-    @commands.has_permissions(manage_messages=True)
-    async def purge(self, ctx, aantal: int):
-        if aantal < 1 or aantal > 100:
-            await ctx.send("❌ Geef een getal tussen 1 en 100 op.")
-            return
+    @app_commands.command(name="regels", description="Toon de serverregels.")
+    async def regels_command(self, interaction: discord.Interaction):
+        regels_tekst = (
+            "**📜 Onze Serverregels**\n\n"
+            "1️⃣ **Wees Respectvol** - Ga altijd met respect met elkaar om, dus geen haatdragende opmerkingen, pesten, racisme, seksisme of discriminatie van welke aard dan ook.\n"
+            "2️⃣ **Geen zelfpromotie** - Maak geen reclame of ga niet jezelf promoten.\n"
+            "3️⃣ **Houd het gezellig** -  Geen drama of negativiteit onnodig creëren.\n"
+            "4️⃣ **Geen NSFW** - Denk hier bij aan naaktheid of andere expliciete dingen.\n"
+            "5️⃣ **Geen Spam** - Spam niet heel de discord vol.\n"
+            "6️⃣ **Luister naar staff leden** - Zij zijn er om de server goed te laten draaien.\n\n"
+            
+            "🩵 Door op de server te blijven ga je akkoord met deze regels.\n"
+        )
+        await interaction.response.send_message(regels_tekst, ephemeral=True)  # Alleen zichtbaar voor de gebruiker
 
-        await ctx.channel.purge(limit=aantal + 1)  # +1 zodat het commando zelf ook verdwijnt
-        bevestiging = await ctx.send(f"✅ {aantal} berichten verwijderd.")
-        await bevestiging.delete(delay=5)  # Verwijder bevestiging na 5 seconden
+    async def cog_load(self):
+        self.bot.tree.add_command(self.regels_command, guild=GUILD_ID)
 
-    @purge.error
-    async def purge_error(self, ctx, error):
-        if isinstance(error, commands.MissingPermissions):
-            await ctx.send("🚫 Je hebt geen permissie om berichten te verwijderen.")
-        elif isinstance(error, commands.BadArgument):
-            await ctx.send("❌ Gebruik: `!purge <aantal>` (bijv. `!purge 10`).")
-        else:
-            await ctx.send("⚠️ Er ging iets mis.")
 
 # ─────── Anime Slash Command ───────
 class AnimeCog(commands.Cog):
@@ -228,6 +253,7 @@ class Core(commands.Cog):
 
         # ───── Adding Slash Commands ─────
         await self.bot.add_cog(HelpCog(self.bot))
+        await self.bot.add_cog(RegelsCog(self.bot))
         await self.bot.add_cog(AnimeCog(self.bot))
 
         await self.bot.tree.sync(guild=GUILD_ID)
