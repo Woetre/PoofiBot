@@ -3,12 +3,14 @@ from discord.ext import commands
 from discord import app_commands
 import logging
 import aiohttp
+import asyncio
 from dotenv import load_dotenv
 import os
 import json
 
 # ─────── Setup ───────
 load_dotenv()
+os.makedirs("data", exist_ok=True)
 token = os.getenv("DISCORD_TOKEN")
 handler = logging.FileHandler(filename='discord.log', encoding='utf-8', mode='w')
 
@@ -20,8 +22,6 @@ GUILD_ID = discord.Object(id=1198629275687981146)
 WELCOME_CHANNEL_ID = 1382064446285025320
 AUTO_ROLE_ID = 1382403336837267577
 
-CONFIG_FILE = "reaction_config.json"
-
 bot = commands.Bot(command_prefix='!', intents=intents)
 
 # ─────── Backend ReactionRole Command ───────
@@ -29,7 +29,7 @@ class ReactionRoleManager:
     def __init__(self, bot):
         self.bot = bot
         self.role_message_id = None
-        self.config_file = CONFIG_FILE
+        self.quotes_file = os.path.join("data", "quotes.json")
         self.emoji_to_role = {
             discord.PartialEmoji(name='minecraft', id=1384211982634451005): 1382403336837267577,
             discord.PartialEmoji(name='valorant', id=1384211801260163112): 1382401490462838839,
@@ -280,6 +280,99 @@ class AnimeCog(commands.Cog):
     async def cog_load(self):
         self.bot.tree.add_command(self.animegif_command, guild=GUILD_ID)
 
+# ─────── /marritquote Slash Command ───────
+class MarritQuoteCog(commands.Cog):
+    def __init__(self, bot):
+        self.bot = bot
+        self.quotes_file = os.path.join("data", "quotes.json")
+        self.quotes = self.load_quotes()
+
+    def load_quotes(self):
+        if os.path.exists(self.quotes_file):
+            with open(self.quotes_file, "r", encoding="utf-8") as f:
+                return json.load(f)
+        return []
+
+    def save_quotes(self):
+        with open(self.quotes_file, "w", encoding="utf-8") as f:
+            json.dump(self.quotes, f, indent=4)
+
+    @app_commands.command(name="marritquote", description="Toont een random quote van Marrit")
+    async def marritquote(self, interaction: discord.Interaction):
+        if not self.quotes:
+            await interaction.response.send_message("😕 Er zijn nog geen quotes toegevoegd.")
+            return
+        import random
+        quote = random.choice(self.quotes)
+        await interaction.response.send_message(f"💬 _{quote}_")
+
+    @commands.command(name="addquote", help="Voegt een quote toe aan de lijst (alleen admins)")
+    @commands.has_permissions(administrator=True)
+    async def addquote(self, ctx, *, quote: str = None):
+        if not quote or not quote.strip():
+            await ctx.send("❌ Je moet wel een quote opgeven. Voorbeeld: `!addquote Dit is een legendarische uitspraak.`")
+            return
+
+        self.quotes.append(quote.strip())
+        self.save_quotes()
+        await ctx.send("✅ Quote toegevoegd.")
+
+    @addquote.error
+    async def addquote_error(self, ctx, error):
+        if isinstance(error, commands.MissingPermissions):
+            await ctx.send("🚫 Je hebt geen toestemming om dit commando te gebruiken.")
+        elif isinstance(error, commands.MissingRequiredArgument):
+            await ctx.send("❌ Gebruik: `!addquote <quote>`")
+        else:
+            await ctx.send(f"⚠️ Er is iets fout gegaan: `{str(error)}`")
+
+    @commands.command(name="removequote", help="Verwijder een quote op nummer (alleen admins)")
+    @commands.has_permissions(administrator=True)
+    async def removequote(self, ctx):
+        if not self.quotes:
+            await ctx.send("📭 Er zijn geen quotes om te verwijderen.")
+            return
+
+        beschrijving = ""
+        for i, q in enumerate(self.quotes, start=1):
+            beschrijving += f"{i}. {q}\n"
+
+        embed = discord.Embed(
+            title="🗑️ Quotes verwijderen",
+            description=beschrijving,
+            color=discord.Color.red()
+        )
+        embed.set_footer(text="Typ het nummer van de quote die je wilt verwijderen.")
+
+        await ctx.send(embed=embed)
+
+        def check(m):
+            return m.author == ctx.author and m.channel == ctx.channel and m.content.isdigit()
+
+        try:
+            antwoord = await self.bot.wait_for("message", check=check, timeout=30)
+            keuze = int(antwoord.content)
+            if 1 <= keuze <= len(self.quotes):
+                verwijderde = self.quotes.pop(keuze - 1)
+                self.save_quotes()
+                await ctx.send(f"✅ Quote verwijderd:\n`{verwijderde}`")
+            else:
+                await ctx.send("❌ Ongeldig nummer.")
+        except asyncio.TimeoutError:
+            await ctx.send("⌛ Tijd verstreken. Probeer het opnieuw.")
+
+    @removequote.error
+    async def removequote_error(self, ctx, error):
+        if isinstance(error, commands.MissingPermissions):
+            await ctx.send("🚫 Je hebt geen toestemming om dit commando te gebruiken.")
+        else:
+            await ctx.send("⚠️ Er ging iets fout.")
+
+
+
+    async def cog_load(self):
+        self.bot.tree.add_command(self.marritquote, guild=GUILD_ID)
+
 # ─────── Core Functionaliteit ───────
 class Core(commands.Cog):
     def __init__(self, bot):
@@ -303,6 +396,7 @@ class Core(commands.Cog):
         await self.bot.add_cog(RegelsCog(self.bot))
         await self.bot.add_cog(PollCog(self.bot))
         await self.bot.add_cog(AnimeCog(self.bot))
+        await self.bot.add_cog(MarritQuoteCog(self.bot))
 
         await self.bot.tree.sync(guild=GUILD_ID)
         print("📡 Slash commands gesynchroniseerd.")
