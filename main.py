@@ -393,6 +393,34 @@ class CoinflipCog(commands.Cog):
     async def cog_load(self):
         self.bot.tree.add_command(self.coinflip, guild=GUILD_ID)
 
+class DobbelCog(commands.Cog):
+    def __init__(self, bot):
+        self.bot = bot
+
+    @app_commands.command(name="dobbel", description="Gooi een dobbelsteen (1 t/m 6)")
+    async def dobbel(self, interaction: discord.Interaction):
+        await interaction.response.defer()  # Geef aan dat het even duurt
+
+        # Laat eerst een 'animatie' zien
+        bericht = await interaction.followup.send("🎲 Gooi de dobbelsteen...")
+
+        await asyncio.sleep(2)  # Simuleer een korte wachttijd
+
+        uitkomst = random.randint(1, 6)
+        dobbel_emoji = {
+            1: "🎲 ➀",
+            2: "🎲 ➁",
+            3: "🎲 ➂",
+            4: "🎲 ➃",
+            5: "🎲 ➄",
+            6: "🎲 ➅"
+        }
+
+        await bericht.edit(content=f"{dobbel_emoji[uitkomst]} **{interaction.user.display_name}** gooide een **{uitkomst}**!")
+
+    async def cog_load(self):
+        self.bot.tree.add_command(self.dobbel, guild=GUILD_ID)
+
 # ─────── Core Functionaliteit ───────
 class Core(commands.Cog):
     def __init__(self, bot):
@@ -418,6 +446,7 @@ class Core(commands.Cog):
         await self.bot.add_cog(AnimeCog(self.bot))
         await self.bot.add_cog(MarritQuoteCog(self.bot))
         await self.bot.add_cog(CoinflipCog(self.bot))
+        await self.bot.add_cog(DobbelCog(self.bot))
 
         await self.bot.tree.sync(guild=GUILD_ID)
         print("📡 Slash commands gesynchroniseerd.")
