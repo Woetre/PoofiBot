@@ -7,6 +7,10 @@ It is uniquely made for [Twitch/Livemetmarrit](https://twitch.tv/livemetmarrit) 
 
 ## 🚀 Features
 
+### ✅ Prefix Commands
+- `!setup_reactroles` – Automatically posts a message with emoji-based role selection. Available only to admins
+- `!purge (amount)` - Removes messages of the amount specfied. Available only to those with manage_messages permissions
+
 ### ✅ Slash Commands
 - `/anime` – Sends a random anime GIF using the Nekos API.
 - `/setup_reactroles` – Automatically posts a message with emoji-based role selection.
