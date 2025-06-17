@@ -20,5 +20,6 @@ Users can react to a message with emojis to gain or remove roles. The bot rememb
 
 ### 👋 Welcome Message
 Automatically sends a welcome message in a specific channel when a new member joins your server.
+Also automatically assigns the user with a specified role.
 
 ---
