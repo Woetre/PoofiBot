@@ -30,6 +30,7 @@ ENV/
 .venv/
 config/.env.production/
 config/.env.development/
+config/.env.*
 
 # VS Code settings
 .vscode/
