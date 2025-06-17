@@ -28,8 +28,8 @@ venv/
 env/
 ENV/
 .venv/
-.env/
-.ENV/
+config/.env.production/
+config/.env.development/
 
 # VS Code settings
 .vscode/
@@ -38,7 +38,7 @@ ENV/
 .idea/
 
 # dotenv environment variables
-.env
+config/.env.production
 *.env
 
 # Logs and other files

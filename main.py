@@ -10,16 +10,29 @@ import json
 import random
 
 # ─────── Setup ───────
-load_dotenv()
+env_choice = os.getenv("ENV")  # via OS of hieronder instellen
+if not env_choice:
+    # fallback naar argument of standaard
+    import sys
+    env_choice = "production" if "--env=production" in sys.argv else "development"
+    print(f"🚀 Bot gestart in '{env_choice}' modus.")
+
+# Laad het juiste bestand
+dotenv_file = os.path.join("config", f".env.{env_choice}")
+load_dotenv(dotenv_file)
+
+
+ENV = os.getenv("ENV")
+TOKEN = os.getenv("DISCORD_TOKEN")
+GUILD_ID = discord.Object(id=int(os.getenv("GUILD_ID")))
+
 os.makedirs("data", exist_ok=True)
-token = os.getenv("DISCORD_TOKEN")
 handler = logging.FileHandler(filename='discord.log', encoding='utf-8', mode='w')
 
 intents = discord.Intents.default()
 intents.message_content = True
 intents.members = True
 
-GUILD_ID = discord.Object(id=1198629275687981146)
 WELCOME_CHANNEL_ID = 1382064446285025320
 AUTO_ROLE_ID = 1382403336837267577
 
@@ -462,4 +475,4 @@ class Core(commands.Cog):
 @bot.event
 async def setup_hook():
     await bot.add_cog(Core(bot))
-bot.run(token, log_handler=handler, log_level=logging.DEBUG)
+bot.run(TOKEN, log_handler=handler, log_level=logging.DEBUG)
