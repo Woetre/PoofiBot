@@ -1,5 +1,6 @@
 To do before startup:
 
+check .env.production
 check id for roles/custom emoijs.
 check permissions.
 make sure poofi is high on role list.

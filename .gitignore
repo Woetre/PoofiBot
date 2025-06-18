@@ -4,6 +4,9 @@
 .env.production
 discord.log
 
+#production (dont touch)
+data/reaction_config.production.json
+data/quotes.production.json
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
