@@ -35,10 +35,6 @@ class Core(commands.Cog):
         await self.bot.add_cog(MarritQuoteCog(self.bot, self.db_config))
         print("✅ Alle modules zijn geladen.")
 
-
-        await self.bot.tree.sync(guild=GUILD_ID)
-        print("🔁 Slash commands gesynchroniseerd met Discord.")
-
     @commands.Cog.listener()
     async def on_ready(self):
         await self.bot.change_presence(
