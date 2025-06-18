@@ -2,7 +2,7 @@
 
 .env.development
 .env.production
-
+discord.log
 
 
 # Byte-compiled / optimized / DLL files
@@ -42,11 +42,6 @@ var/
 
 # Mac OS files
 .DS_Store
-
-# Token/security files (e.g. Discord tokens)
-config.json
-secrets.json
-token.txt
 
 # System files
 Thumbs.db

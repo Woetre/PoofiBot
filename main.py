@@ -21,6 +21,8 @@ if not env_choice:
 dotenv_file = os.path.join("config", f".env.{env_choice}")
 load_dotenv(dotenv_file)
 
+WELCOME_CHANNEL_ID = int(os.getenv("WELCOME_CHANNEL_ID"))
+AUTO_ROLE_ID = int(os.getenv("AUTO_ROLE_ID"))
 
 ENV = os.getenv("ENV")
 TOKEN = os.getenv("DISCORD_TOKEN")
@@ -33,9 +35,6 @@ intents = discord.Intents.default()
 intents.message_content = True
 intents.members = True
 
-WELCOME_CHANNEL_ID = 1382064446285025320
-AUTO_ROLE_ID = 1382403336837267577
-
 bot = commands.Bot(command_prefix='!', intents=intents)
 
 # ─────── Backend ReactionRole Command ───────
@@ -43,7 +42,7 @@ class ReactionRoleManager:
     def __init__(self, bot):
         self.bot = bot
         self.role_message_id = None
-        self.config_file = os.path.join("data", "reaction_config.json")
+        self.config_file = os.path.join("data", f"reaction_config.{ENV}.json")
         self.emoji_to_role = self.load_emoji_config()
         self.load_config()
         bot.add_listener(self.on_raw_reaction_add)
@@ -152,8 +151,8 @@ class WelcomeCog(commands.Cog):
             await channel.send(
                 f"👋 Welkom {member.mention} op de server! 🎉"
                 f"\n• ✅ Haal je rollen op in #rollen."
-                f"\n• 📺 Bekijk wanneer Marrit live is in #live-aankondigingen."
-                f"\n• 💬 Chat mee in #algemeen of spring in een voicechannel."
+                f"\n• 📺 Bekijk wanneer Marrit live is in #stream-meldingen"
+                f"\n• 💬 Chat mee in #de-babbel-hoek of spring in een voicechannel."
                 f"\n\nVeel plezier en wees lief voor elkaar! 💜"
             )
 
@@ -309,7 +308,8 @@ class AnimeCog(commands.Cog):
 class MarritQuoteCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.quotes_file = os.path.join("data", "quotes.json")
+        self.quotes_file = os.path.join("data", f"quotes.{ENV}.json")
+
         self.quotes = self.load_quotes()
 
     def load_quotes(self):
