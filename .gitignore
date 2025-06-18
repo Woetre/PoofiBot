@@ -1,3 +1,10 @@
+#important
+
+.env.development
+.env.production
+
+
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -28,13 +35,6 @@ var/
 
 # PyCharm settings
 .idea/
-
-# tokens
-config
-config/.env.*
-config/.env.production
-config/.env.development
-*.env
 
 # Logs and other files
 *.log

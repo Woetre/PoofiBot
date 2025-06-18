@@ -44,13 +44,24 @@ class ReactionRoleManager:
         self.bot = bot
         self.role_message_id = None
         self.config_file = os.path.join("data", "reaction_config.json")
-        self.emoji_to_role = {
-            discord.PartialEmoji(name='minecraft', id=1384211982634451005): 1382403336837267577,
-            discord.PartialEmoji(name='valorant', id=1384211801260163112): 1382401490462838839,
-        }
+        self.emoji_to_role = self.load_emoji_config()
         self.load_config()
         bot.add_listener(self.on_raw_reaction_add)
         bot.add_listener(self.on_raw_reaction_remove)
+
+    def load_emoji_config(self):
+        emoji_config_file = os.path.join("config", f"emojis.{ENV}.json")
+        emoji_to_role = {}
+        try:
+            with open(emoji_config_file, "r", encoding="utf-8") as f:
+                data = json.load(f)
+                for name, info in data.items():
+                    emoji = discord.PartialEmoji(name=name, id=info["id"])
+                    emoji_to_role[emoji] = info["role_id"]
+            print("🎭 Emoji-config geladen.")
+        except Exception as e:
+            print(f"⚠️ Kon emoji config niet laden: {e}")
+        return emoji_to_role
 
     def set_message_id(self, msg_id):
         self.role_message_id = msg_id
