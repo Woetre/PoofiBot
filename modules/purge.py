@@ -1,3 +1,6 @@
+#-- final --#
+
+import asyncio
 import discord
 from discord.ext import commands
 
@@ -14,13 +17,29 @@ class PurgeCog(commands.Cog):
 
         await ctx.channel.purge(limit=aantal + 1)  # +1 zodat het commando zelf ook verdwijnt
         bevestiging = await ctx.send(f"✅ {aantal} berichten verwijderd.")
-        await bevestiging.delete(delay=5)
+        await bevestiging.delete(delay=2)
 
     @purge.error
     async def purge_error(self, ctx, error):
+        fout = None
+
         if isinstance(error, commands.MissingPermissions):
-            await ctx.send("🚫 Je hebt geen permissie om berichten te verwijderen.")
+            fout = await ctx.send("🚫 Je hebt geen permissie om berichten te verwijderen.")
         elif isinstance(error, commands.BadArgument):
-            await ctx.send("❌ Gebruik: `!purge <aantal>` (bijv. `!purge 10`).")
+            fout = await ctx.send("❌ Gebruik: `!purge <aantal>` (bijv. `!purge 10`).")
         else:
-            await ctx.send("⚠️ Er ging iets mis.")
+            fout = await ctx.send("⚠️ Er ging iets mis.")
+
+        await asyncio.sleep(3)  # Wacht voor effect
+
+        # Verwijder beide berichten tegelijk
+        try:
+            await ctx.message.delete()
+        except discord.HTTPException:
+            pass
+
+        try:
+            await fout.delete()
+        except discord.HTTPException:
+            pass
+
