@@ -1,5 +1,0 @@
-To do before startup:
-
-check id for roles/custom emoijs.
-check permissions.
-make sure poofi is high on role list.
