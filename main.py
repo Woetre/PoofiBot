@@ -129,7 +129,7 @@ class ReactionRoleCog(commands.Cog):
         message = await ctx.send(
             "📌 Reageer met een emoji om een rol te krijgen:"
             "\n"
-            "\n<:live:000> = Voor notificaties wanneer Marrit live gaat"
+            "\n<:livee:1384887113735995452> = Voor notificaties wanneer Marrit live gaat"
             "\n<:valorant:1384211801260163112> = Voor alles wat betreft valorant"
             "\n<:minecraft:1384211982634451005> = Voor alles wat betreft minecraft"
         )
