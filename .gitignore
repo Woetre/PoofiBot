@@ -23,22 +23,17 @@ var/
 .installed.cfg
 *.egg
 
-# Virtual environments
-venv/
-env/
-ENV/
-.venv/
-.env/
-.ENV/
-
 # VS Code settings
 .vscode/
 
 # PyCharm settings
 .idea/
 
-# dotenv environment variables
-.env
+# tokens
+config
+config/.env.*
+config/.env.production
+config/.env.development
 *.env
 
 # Logs and other files
@@ -67,6 +62,3 @@ htmlcov/
 coverage.xml
 nosetests.xml
 pytest_cache/
-
-# Optional: ignore Jupyter notebooks (if not used)
-*.ipynb
