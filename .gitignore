@@ -23,15 +23,6 @@ var/
 .installed.cfg
 *.egg
 
-# Virtual environments
-venv/
-env/
-ENV/
-.venv/
-config/.env.production/
-config/.env.development/
-config/.env.*
-
 # VS Code settings
 .vscode/
 
@@ -68,6 +59,3 @@ htmlcov/
 coverage.xml
 nosetests.xml
 pytest_cache/
-
-# Optional: ignore Jupyter notebooks (if not used)
-*.ipynb
