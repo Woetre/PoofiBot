@@ -29,8 +29,11 @@ var/
 # PyCharm settings
 .idea/
 
-# dotenv environment variables
+# tokens
+config
+config/.env.*
 config/.env.production
+config/.env.development
 *.env
 
 # Logs and other files
