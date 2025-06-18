@@ -129,6 +129,7 @@ class ReactionRoleCog(commands.Cog):
         message = await ctx.send(
             "📌 Reageer met een emoji om een rol te krijgen:"
             "\n"
+            "\n<:live:000> = Voor notificaties wanneer Marrit live gaat"
             "\n<:valorant:1384211801260163112> = Voor alles wat betreft valorant"
             "\n<:minecraft:1384211982634451005> = Voor alles wat betreft minecraft"
         )
@@ -214,7 +215,7 @@ class HelpCog(commands.Cog):
     async def cog_load(self):
         self.bot.tree.add_command(self.help_command, guild=GUILD_ID)
 
-# ─────── Regels Slash Command ───────
+# ─────── Regels Slash Command + Regels Prefix Command ───────
 class RegelsCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -233,6 +234,32 @@ class RegelsCog(commands.Cog):
             "🩵 Door op de server te blijven ga je akkoord met deze regels.\n"
         )
         await interaction.response.send_message(regels_tekst, ephemeral=True)  # Alleen zichtbaar voor de gebruiker
+
+    @commands.command(name="regels", help="Toont de serverregels.")
+    @commands.has_permissions(administrator=True)
+    async def regels_prefix(self, ctx):
+        try:
+            await ctx.message.delete()
+        except discord.Forbidden:
+            pass  # Bot heeft geen rechten om berichten te verwijderen
+
+        regels_tekst = (
+            "**📜 Onze Serverregels**\n\n"
+            "1️⃣ **Wees Respectvol** - Ga altijd met respect met elkaar om, dus geen haatdragende opmerkingen, pesten, racisme, seksisme of discriminatie van welke aard dan ook.\n"
+            "2️⃣ **Geen zelfpromotie** - Maak geen reclame of ga niet jezelf promoten.\n"
+            "3️⃣ **Houd het gezellig** - Geen drama of negativiteit onnodig creëren.\n"
+            "4️⃣ **Geen NSFW** - Denk hier bij aan naaktheid of andere expliciete dingen.\n"
+            "5️⃣ **Geen Spam** - Spam niet heel de discord vol.\n"
+            "6️⃣ **Luister naar staff leden** - Zij zijn er om de server goed te laten draaien.\n"
+            "7️⃣ **/Regels** - Toont de serverregels.\n\n"
+            "🩵 Door op de server te blijven ga je akkoord met deze regels.\n"
+        )
+        await ctx.send(regels_tekst)
+
+    @regels_prefix.error
+    async def regels_prefix_error(self, ctx, error):
+        if isinstance(error, commands.MissingPermissions):
+            await ctx.send("🚫 Je hebt geen toestemming om dit commando te gebruiken.", delete_after=5)
 
     async def cog_load(self):
         self.bot.tree.add_command(self.regels_command, guild=GUILD_ID)
