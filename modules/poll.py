@@ -1,3 +1,5 @@
+#-- final --#
+
 import discord
 from discord import app_commands
 from discord.ext import commands
@@ -29,7 +31,7 @@ class PollCog(commands.Cog):
         embed = discord.Embed(
             title=f"📊 {vraag}",
             description=beschrijving,
-            color=discord.Color.green()
+            color=discord.Color.blurple()
         )
         embed.set_footer(text=f"Gemaakt door: {interaction.user.display_name}")
 

@@ -56,9 +56,7 @@ class DobbelCog(commands.Cog):
                 color=discord.Color.blurple()
             )
 
-        if aantal > 1:
-            embed.set_footer(text=f"Totaal: {totaal}")
-
+        embed.set_footer(text=f"Totaal: {totaal}")
         await bericht.edit(content=None, embed=embed)
 
     async def cog_load(self):
