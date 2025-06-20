@@ -13,7 +13,7 @@ class ReactionRoleCog(commands.Cog):
         # Emoji's gekoppeld aan rol-ID’s per guild/server
         self.config = {
             1359579900868038806: {  # Live server ID
-                discord.PartialEmoji(name="live", id=1384887113735995452): 1384469398651146271,
+                discord.PartialEmoji(name="live", id=1384887057280929933): 1384469398651146271,
                 discord.PartialEmoji(name="valorant", id=1384836401450975242): 1384234778127106168,
                 discord.PartialEmoji(name="minecraft", id=1384836426599759902): 1384234855155368058
             },
