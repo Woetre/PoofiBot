@@ -71,7 +71,7 @@ class LeaderboardView(discord.ui.View):
         self.page += 1
         await interaction.response.edit_message(embed=self.get_embed(), view=self)
 
-class XPCog(commands.Cog):
+class LevelCog(commands.Cog):
     def __init__(self, bot, db_pool):
         self.bot = bot
         self.db_pool: asyncpg.Pool = db_pool
@@ -117,8 +117,8 @@ class XPCog(commands.Cog):
                 if role and role not in member.roles:
                     await member.add_roles(role, reason="Level behaald")
 
-    @app_commands.command(name="xp", description="Bekijk de XP en level van jezelf of een ander")
-    @app_commands.describe(user="De gebruiker waarvan je XP wil bekijken (optioneel)")
+    @app_commands.command(name="level", description="Bekijk de level en xp van jezelf of een ander")
+    @app_commands.describe(user="De gebruiker waarvan je level/xp wilt bekijken (optioneel)")
     async def xp_check(self, interaction: discord.Interaction, user: discord.User = None):
         target = user or interaction.user
         user_id = target.id
@@ -164,7 +164,7 @@ class XPCog(commands.Cog):
         embed = view.get_embed()
         await interaction.response.send_message(embed=embed, view=view)
 
-    @app_commands.command(name="daily", description="Claim je dagelijkse XP")
+    @app_commands.command(name="dailyxp", description="Claim je dagelijkse XP")
     async def claim_daily(self, interaction: discord.Interaction):
         user_id = interaction.user.id
         today = datetime.date.today()
