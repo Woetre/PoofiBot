@@ -11,6 +11,7 @@ from modules.purge import PurgeCog
 from modules.welcome import WelcomeCog
 from modules.quotes import MarritQuoteCog
 from modules.reaction_roles import ReactionRoleCog
+from modules.vps import VpsStatusCog
 
 class Core(commands.Cog):
     def __init__(self, bot, db_pool):
@@ -32,6 +33,7 @@ class Core(commands.Cog):
         await self.bot.add_cog(CoinflipCog(self.bot))
         await self.bot.add_cog(DobbelCog(self.bot))
         await self.bot.add_cog(MarritQuoteCog(self.bot, self.db_pool))
+        await self.bot.add_cog(VpsStatusCog(self.bot))
         print("✅ Alle modules zijn geladen.")
 
     @commands.Cog.listener()
