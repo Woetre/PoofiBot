@@ -1,9 +1,9 @@
 #-- final --#
-
 import discord
 from discord import app_commands
 from discord.ext import commands
 from bot_config import GUILD_ID
+import asyncio
 
 class PollCog(commands.Cog):
     def __init__(self, bot):
@@ -15,11 +15,11 @@ class PollCog(commands.Cog):
         opties="Kiesopties gescheiden door komma’s (bijv: Ja,Nee,Misschien)"
     )
     async def poll_command(self, interaction: discord.Interaction, vraag: str, opties: str):
-        emoji_cijfers = ['1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣', '9️⃣', '🔟']
+        emoji_cijfers = ['1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣']
         opties_lijst = [opt.strip() for opt in opties.split(",") if opt.strip()]
 
-        if not 2 <= len(opties_lijst) <= 10:
-            await interaction.response.send_message("❌ Geef tussen de 2 en 10 opties op.", ephemeral=True)
+        if not 2 <= len(opties_lijst) <= 5:
+            await interaction.response.send_message("❌ Geef tussen de 2 en 5 opties op.", ephemeral=True)
             return
 
         await interaction.response.defer()
@@ -39,7 +39,9 @@ class PollCog(commands.Cog):
         for i in range(len(opties_lijst)):
             await bericht.add_reaction(emoji_cijfers[i])
 
-        await interaction.followup.send("✅ Poll is geplaatst!", ephemeral=True)
+        response = await interaction.followup.send("✅ Poll is geplaatst!")
+        await asyncio.sleep(5)
+        await response.delete()
 
     async def cog_load(self):
         self.bot.tree.add_command(self.poll_command, guild=GUILD_ID)
