@@ -4,6 +4,7 @@ from dotenv import load_dotenv
 import os
 import sys
 import logging
+import asyncpg
 
 # ─────── Omgeving ───────
 env_choice = os.getenv("ENV")
@@ -57,8 +58,12 @@ bot.synced = False  # Toevoegen van attribuut om dubbel syncen te vermijden
 # ─────── Setup Hook ───────
 @bot.event
 async def setup_hook():
+    # Maak de database pool aan
+    pool = await asyncpg.create_pool(**DB_CONFIG)
+
+    # Voeg Core toe met de pool in plaats van de dict
     from modules.core import Core
-    await bot.add_cog(Core(bot, db_config=DB_CONFIG))
+    await bot.add_cog(Core(bot, db_pool=pool))
 
     # Slash commands slechts één keer syncen
     if not bot.synced:

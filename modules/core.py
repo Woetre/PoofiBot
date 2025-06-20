@@ -10,17 +10,16 @@ from modules.dobbel import DobbelCog
 from modules.purge import PurgeCog
 from modules.welcome import WelcomeCog
 from modules.quotes import MarritQuoteCog
-from modules.reaction_roles import ReactionRoleManager, ReactionRoleCog
+from modules.reaction_roles import ReactionRoleCog
 
 class Core(commands.Cog):
-    def __init__(self, bot, db_config):
+    def __init__(self, bot, db_pool):
         self.bot = bot
-        self.db_config = db_config
+        self.db_pool = db_pool
 
     async def cog_load(self):
         # ───── Reaction Roles ─────
-        rr_manager = ReactionRoleManager(self.bot)
-        rr_cog = ReactionRoleCog(self.bot, rr_manager)
+        rr_cog = ReactionRoleCog(self.bot, self.db_pool)
         await self.bot.add_cog(rr_cog)
         await rr_cog.cog_load()
 
@@ -32,7 +31,7 @@ class Core(commands.Cog):
         await self.bot.add_cog(PollCog(self.bot))
         await self.bot.add_cog(CoinflipCog(self.bot))
         await self.bot.add_cog(DobbelCog(self.bot))
-        await self.bot.add_cog(MarritQuoteCog(self.bot, self.db_config))
+        await self.bot.add_cog(MarritQuoteCog(self.bot, self.db_pool))
         print("✅ Alle modules zijn geladen.")
 
     @commands.Cog.listener()

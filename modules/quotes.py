@@ -9,22 +9,20 @@ import os
 GUILD_ID = discord.Object(id=int(os.getenv("GUILD_ID")))
 
 class MarritQuoteCog(commands.Cog):
-    def __init__(self, bot, db_config):
+    def __init__(self, bot, db_pool):
         self.bot = bot
-        self.pool = None
-        self.db_config = db_config
+        self.pool = db_pool
 
     async def setup_db(self):
-        self.pool = await asyncpg.create_pool(**self.db_config)
         print("🔗 Verbonden met database (quotes).")
-
         async with self.pool.acquire() as conn:
             await conn.execute("""
-                CREATE TABLE IF NOT EXISTS quotes (
-                    id SERIAL PRIMARY KEY,
-                    content TEXT NOT NULL
-                );
-            """)
+                               CREATE TABLE IF NOT EXISTS quotes
+                               (
+                                   id      SERIAL PRIMARY KEY,
+                                   content TEXT NOT NULL
+                               );
+                               """)
 
     @app_commands.command(name="marritquote", description="Toont een random quote van Marrit")
     async def marritquote(self, interaction: discord.Interaction):
