@@ -4,6 +4,7 @@ from discord import app_commands
 import asyncpg
 import random
 import datetime
+import math
 from math import floor, sqrt
 from bot_config import GUILD_ID
 
@@ -11,17 +12,64 @@ from bot_config import GUILD_ID
 def calculate_level(xp: int) -> int:
     return floor(0.1 * sqrt(xp))
 
-# XP nodig voor volgend level
 def xp_for_next_level(level: int) -> int:
     return int((level + 1) ** 2 * 100)
 
-# Rollen per level (pas deze IDs aan!)
+# Rollen per level
 LEVEL_ROLES = {
-    5: 123456789012345678,
-    10: 223456789012345678,
-    20: 323456789012345678
+    5: 1385726023387320392,
+    10: 1385726078370451486,
+    20: 1385726108619509760
 }
 
+class LeaderboardView(discord.ui.View):
+    def __init__(self, interaction: discord.Interaction, leaderboard_data, per_page=10):
+        super().__init__(timeout=60)
+        self.interaction = interaction
+        self.data = leaderboard_data
+        self.per_page = per_page
+        self.page = 0
+        self.max_pages = math.ceil(len(self.data) / per_page)
+
+    def get_embed(self):
+        embed = discord.Embed(
+            title=f"🏆 XP Leaderboard",
+            description=f"Pagina {self.page + 1} van {self.max_pages}",
+            color=discord.Color.gold()
+        )
+        start = self.page * self.per_page
+        end = start + self.per_page
+
+        for i, row in enumerate(self.data[start:end], start=start + 1):
+            user = self.interaction.client.get_user(row["user_id"]) or f"<@{row['user_id']}>"
+            level = calculate_level(row["xp"])
+            embed.add_field(
+                name=f"{i}. {user}",
+                value=f"Level {level} – {row['xp']} XP",
+                inline=False
+            )
+        return embed
+
+    async def send_error(self, interaction, msg):
+        await interaction.response.send_message(msg, ephemeral=True, delete_after=3)
+
+    @discord.ui.button(label="⬅️", style=discord.ButtonStyle.secondary)
+    async def vorige(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if interaction.user != self.interaction.user:
+            return await self.send_error(interaction, "⛔ Alleen jij mag bladeren.")
+        if self.page == 0:
+            return await self.send_error(interaction, "🚫 Eerste pagina.")
+        self.page -= 1
+        await interaction.response.edit_message(embed=self.get_embed(), view=self)
+
+    @discord.ui.button(label="➡️", style=discord.ButtonStyle.secondary)
+    async def volgende(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if interaction.user != self.interaction.user:
+            return await self.send_error(interaction, "⛔ Alleen jij mag bladeren.")
+        if self.page >= self.max_pages - 1:
+            return await self.send_error(interaction, "🚫 Laatste pagina.")
+        self.page += 1
+        await interaction.response.edit_message(embed=self.get_embed(), view=self)
 
 class XPCog(commands.Cog):
     def __init__(self, bot, db_pool):
@@ -41,7 +89,7 @@ class XPCog(commands.Cog):
 
             if data and data["last_message_ts"]:
                 delta = now - data["last_message_ts"]
-                if delta.total_seconds() < 60:
+                if delta.total_seconds() < 5:
                     return
 
             gained_xp = random.randint(5, 10)
@@ -69,25 +117,52 @@ class XPCog(commands.Cog):
                 if role and role not in member.roles:
                     await member.add_roles(role, reason="Level behaald")
 
-    @app_commands.command(name="xp", description="Bekijk je XP en level")
-    async def xp_check(self, interaction: discord.Interaction):
-        user_id = interaction.user.id
-        async with self.db_pool.acquire() as conn:
-            data = await conn.fetchrow("SELECT xp FROM xp_users WHERE user_id = $1", user_id)
+    @app_commands.command(name="xp", description="Bekijk de XP en level van jezelf of een ander")
+    @app_commands.describe(user="De gebruiker waarvan je XP wil bekijken (optioneel)")
+    async def xp_check(self, interaction: discord.Interaction, user: discord.User = None):
+        target = user or interaction.user
+        user_id = target.id
+        today = datetime.date.today()
 
-        xp = data["xp"] if data else 0
+        async with self.db_pool.acquire() as conn:
+            data = await conn.fetchrow("""
+                SELECT xp, last_daily_claim FROM xp_users WHERE user_id = $1
+            """, user_id)
+            xp = data["xp"] if data else 0
+            rank = await conn.fetchval("SELECT COUNT(*) FROM xp_users WHERE xp > $1", xp)
+            total = await conn.fetchval("SELECT COUNT(*) FROM xp_users")
+
+        last_daily = data["last_daily_claim"] if data else None
         level = calculate_level(xp)
         next_xp = xp_for_next_level(level)
         progress = f"{xp}/{next_xp} XP"
+        daily_emoji = "✅" if last_daily == today else "❌"
 
         embed = discord.Embed(
-            title=f"📈 XP Overzicht voor {interaction.user.display_name}",
-            description=f"**Level:** {level}\n**XP:** {progress}",
+            title=f"📈 XP Overzicht voor {target.display_name}",
+            description=(
+                f"**Level:** {level}\n"
+                f"**XP:** {progress}\n"
+                f"**Daily geclaimd:** {daily_emoji}\n"
+                f"**🏆 Rank:** #{(rank or 0) + 1} van {total}"
+            ),
             color=discord.Color.green()
         )
-        embed.set_thumbnail(url=interaction.user.display_avatar.url)
+        embed.set_thumbnail(url=target.display_avatar.url)
 
         await interaction.response.send_message(embed=embed)
+
+    @app_commands.command(name="leaderboard", description="Bekijk het XP leaderboard")
+    async def leaderboard(self, interaction: discord.Interaction):
+        async with self.db_pool.acquire() as conn:
+            rows = await conn.fetch("SELECT user_id, xp FROM xp_users ORDER BY xp DESC LIMIT 100")
+
+        if not rows:
+            return await interaction.response.send_message("⚠️ Geen data beschikbaar.", ephemeral=True)
+
+        view = LeaderboardView(interaction, rows)
+        embed = view.get_embed()
+        await interaction.response.send_message(embed=embed, view=view)
 
     @app_commands.command(name="daily", description="Claim je dagelijkse XP")
     async def claim_daily(self, interaction: discord.Interaction):
@@ -98,8 +173,7 @@ class XPCog(commands.Cog):
             data = await conn.fetchrow("SELECT xp, last_daily_claim FROM xp_users WHERE user_id = $1", user_id)
 
             if data and data["last_daily_claim"] == today:
-                await interaction.response.send_message("⏳ Je hebt je daily al geclaimd vandaag!", ephemeral=True)
-                return
+                return await interaction.response.send_message("⏳ Je hebt je daily al geclaimd vandaag!", ephemeral=True)
 
             gained = random.randint(50, 100)
             new_xp = (data["xp"] if data else 0) + gained
@@ -115,31 +189,29 @@ class XPCog(commands.Cog):
 
         await interaction.response.send_message(f"✅ Je hebt {gained} XP geclaimd!", ephemeral=True)
 
-    @app_commands.command(name="leaderboard", description="Bekijk de top 10 XP gebruikers")
-    async def leaderboard(self, interaction: discord.Interaction):
+    @commands.command(name="givexp")
+    @commands.has_permissions(administrator=True)
+    async def givexp(self, ctx, user: discord.User, amount: int):
         async with self.db_pool.acquire() as conn:
-            top = await conn.fetch("""
-                SELECT user_id, xp FROM xp_users ORDER BY xp DESC LIMIT 10
-            """)
+            data = await conn.fetchrow("SELECT xp FROM xp_users WHERE user_id = $1", user.id)
+            new_xp = (data["xp"] if data else 0) + amount
 
-        embed = discord.Embed(
-            title="🏆 XP Leaderboard",
-            color=discord.Color.gold()
-        )
+            if data:
+                await conn.execute("UPDATE xp_users SET xp = $1 WHERE user_id = $2", new_xp, user.id)
+            else:
+                await conn.execute("INSERT INTO xp_users (user_id, xp) VALUES ($1, $2)", user.id, amount)
 
-        for i, row in enumerate(top, start=1):
-            user = self.bot.get_user(row["user_id"]) or f"<@{row['user_id']}>"
-            level = calculate_level(row["xp"])
-            embed.add_field(
-                name=f"{i}. {user}",
-                value=f"Level {level} - {row['xp']} XP",
-                inline=False
-            )
+        await ctx.send(f"✅ {amount} XP toegekend aan {user.mention}.")
 
-        await interaction.response.send_message(embed=embed)
+    @commands.command(name="resetxp")
+    @commands.has_permissions(administrator=True)
+    async def resetxp(self, ctx, user: discord.User):
+        async with self.db_pool.acquire() as conn:
+            await conn.execute("UPDATE xp_users SET xp = 0 WHERE user_id = $1", user.id)
+
+        await ctx.send(f"🔄 XP van {user.mention} is gereset naar 0.")
 
     async def cog_load(self):
-        # Database-tabel aanmaken
         async with self.db_pool.acquire() as conn:
             await conn.execute("""
                 CREATE TABLE IF NOT EXISTS xp_users (
@@ -150,7 +222,6 @@ class XPCog(commands.Cog):
                 );
             """)
 
-        # Slash commands syncen naar guild
         self.bot.tree.add_command(self.xp_check, guild=GUILD_ID)
         self.bot.tree.add_command(self.claim_daily, guild=GUILD_ID)
         self.bot.tree.add_command(self.leaderboard, guild=GUILD_ID)
