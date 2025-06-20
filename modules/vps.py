@@ -22,7 +22,7 @@ class VpsStatusCog(commands.Cog):
 
         embed = discord.Embed(
             title="📊 VPS Status",
-            color=discord.Color.blue()
+            color=discord.Color.blurple()
         )
         embed.add_field(name="🖥️ CPU gebruik", value=f"{cpu_usage}%", inline=False)
         embed.add_field(name="🧠 Geheugen", value=f"{memory.used // (1024 ** 2)}MB / {memory.total // (1024 ** 2)}MB ({memory.percent}%)", inline=False)
